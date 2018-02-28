@@ -27,7 +27,6 @@ if ( $mdfound < 5 )
   }
 }
 
-&plelorec::debug_on();
 
 if ( $mdfound < 5 ) { die("\nNo such module: " . $modul . ":\n\n"); }
 @argpass = ($mdats);

@@ -1,0 +1,6 @@
+
+Sources used to understand EPUB:
+https://www.thoughtco.com/create-epub-file-from-html-and-xml-3467282
+
+
+

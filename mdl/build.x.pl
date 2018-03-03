@@ -20,6 +20,12 @@ my $our_uid_thing = '';
 my $our_uid_set = 0;
 
 my $do_build_toc = 10;
+my $depth_of_toc = 0;
+my $toc_on_an_xml_so = 0;
+my $toc_on_an_xml_at;
+my $toc_last_level = 0;
+my $toc_last_count = 0;
+my @toc_list = ();
 
 my @source_lines;
 my $source_elin;
@@ -188,7 +194,7 @@ sub eachlin {
 
   if ( $lc_tp eq 'cont' )
   {
-    return;
+    return &import_of__cont__do($lc_cn);
   }
 
   if ( $lc_tp eq 'buildtoc' )
@@ -323,6 +329,71 @@ print CONTENTOPF '</spine>
 close CONTENTOPF;
 
 
+# Finally, we build the Table of Contents:
+if ( $do_build_toc > 5 )
+{
+  my $lc_node;
+  my $lc_lvl;
+  my $lc_nidnc;
+  $toc_last_level = 0; # Have to reset it for this operation:
+  $lc_nidnc = 0;
+
+  open TOCO,("| cat > " . &wraprg::bsc(($build_dir . '/OEBPS/toc.ncx')));
+
+  print TOCO "<?xml version='1.0' encoding='utf-8'?>" . '
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="' . &vanso('language') . '">
+<head>
+<meta content="' . $our_uid_thing . '" name="dtb:uid"/>
+<meta content="' . $depth_of_toc . '" name="dtb:depth"/>
+<meta content="chobakepubtl" name="dtb:generator"/>
+<meta content="0" name="dtb:totalPageCount"/>
+<meta content="0" name="dtb:maxPageNumber"/>
+</head>
+<docTitle>
+<text>' . &vanso('title') . '</text>
+</docTitle>
+<navMap>
+';
+
+  foreach $lc_node (@toc_list)
+  {
+    $lc_lvl = $lc_node->{'lvl'};
+    while ( $toc_last_level > ( $lc_lvl - 0.5 ) )
+    {
+      print TOCO "</navPoint>\n";
+      $toc_last_level = int($toc_last_level - 0.8);
+    }
+    while ( $toc_last_level < ( $lc_lvl - 0.5 ) )
+    {
+      $lc_nidnc = int($lc_nidnc + 1.2);
+      $lc_node->{'idnu'} = 'navig_' . $lc_nidnc . '_id';
+      $lc_node->{'ordnu'} = $lc_nidnc;
+      print TOCO "<navPoint";
+      print TOCO ' id="' . $lc_node->{'idnu'} . '"';
+      print TOCO ' playOrder="' . $lc_node->{'ordnu'} . '"';
+      print TOCO ">\n";
+      $toc_last_level = int($toc_last_level + 1.2);
+    }
+
+    #print TOCO ( $lc_node->{'title'} . " : " . $lc_lvl . "\n" );
+
+    print TOCO "<navLabel>\n<text>";
+    print TOCO $lc_node->{'title'};
+    print TOCO "</text>\n</navLabel>\n";
+    print TOCO '<content src="' . $lc_node->{'ref'} . '"/>' . "\n";
+
+  }
+  while ( $toc_last_level > 0.5 )
+  {
+    print TOCO "</navPoint>\n";
+    $toc_last_level = int($toc_last_level - 0.8);
+  }
+
+  print TOCO "</navMap>\n</ncx>\n";
+  close TOCO;
+}
+
+
 # Finally, having prepared everything in the build directory,
 # it is now time to zip it all into the EPUB.
 {
@@ -406,6 +477,10 @@ sub import_of__ftext__do {
   system('rmdir',$lc_dst);
   system('cp',&wraprg::rel_sm($source_fdir,$_[0]),$lc_dst);
 
+  # For TOC Generator, we must know what page we are on.
+  $toc_on_an_xml_so = 10;
+  $toc_on_an_xml_at = $_[0];
+
   if ( &found_crit_field('ftext') )
   {
     die "\nILLEGAL for two lines of type 'ftext':\n\n";
@@ -422,9 +497,70 @@ sub import_of__text__do {
   system('rmdir',$lc_dst);
   system('cp',&wraprg::rel_sm($source_fdir,$_[0]),$lc_dst);
 
+  # For TOC Generator, we must know what page we are on.
+  $toc_on_an_xml_so = 10;
+  $toc_on_an_xml_at = $_[0];
+
   @list_of__txt__of = (@list_of__txt__of,$_[0]);
   $list_of__txt__cn = int($list_of__txt__cn + 1.2);
   $list_of__txt__id->{$_[0]} = ( 'rtex_' . $list_of__txt__cn . '_id' );
+}
+
+sub import_of__cont__do {
+  my $lc_lvl;
+  my $lc_taglt;
+  my $lc_title;
+  my $lc_node;
+  ($lc_lvl,$lc_taglt,$lc_title) = split(/:/,$_[0],3);
+
+  if ( $lc_lvl < 0.5 )
+  {
+die "
+ILLEGAL:
+  The value of the first argument of a 'cont' line must
+  not be less than 1.
+
+";
+  }
+
+  if ( ( $lc_lvl - $toc_last_level ) > 1.5 )
+  {
+die "
+ILLEGAL:
+  Jump of TOC level from " . $toc_last_level . " to " . $lc_lvl . "
+  exceeds then maximum 1-level increase allowed per TOC entry.
+
+";
+  }
+  $toc_last_level = $lc_lvl;
+
+  if ( $toc_on_an_xml_so < 5 )
+  {
+    die "
+ILLEGAL:
+  The first 'cont' line in the recipe file may not come
+  before the first page source reference in the recipe
+  file (which would be either a 'text' line or an
+  'ftext' line).
+
+";
+  }
+
+  $toc_last_count = int($toc_last_count + 1.2);
+  $lc_node = {
+    'lvl' => $lc_lvl,
+    'idn' => ( 'toc_item_' . $toc_last_count . '_id' ),
+    'title' => $lc_title,
+    'ref' => ( $toc_on_an_xml_at . '#' . $lc_taglt ),
+    'playorder' => $toc_last_count,
+  };
+  if ( $lc_taglt eq '*' )
+  {
+    $lc_node->{'ref'} = $toc_on_an_xml_at;
+  }
+  @toc_list = (@toc_list,$lc_node);
+
+  if ( $lc_lvl > $depth_of_toc ) { $depth_of_toc = $lc_lvl; }
 }
 
 sub vanso {

@@ -268,18 +268,25 @@ print CONTENTOPF "<?xml version='1.0' encoding='utf-8'?>" . '
 <manifest>
 ';
 
+sub megamyme {
+  return &wraprg::abro(('file --mime-type -b ' . &wraprg::bsc(($build_dir . '/OEBPS/' . $_[0]))));
+}
+
 {
   my $lc_a;
+  my $lc_mt;
 
+  $lc_mt = &megamyme($list_of__cvimg__at);
   print CONTENTOPF '<item href="' . $list_of__cvimg__at .
-      '" id="cover" media-type="image/jpeg"/>' . "\n"
+      '" id="cover" media-type="' . $lc_mt . '"/>' . "\n"
     ;
 
   foreach $lc_a (@list_of__img__of)
   {
+    $lc_mt = &megamyme($list_of__img__id->{$lc_a});
     print CONTENTOPF '<item href="' . $lc_a .
       '" id="' . $list_of__img__id->{$lc_a} .
-      '" media-type="image/jpeg"/>' . "\n"
+      '" media-type="' . $lc_mt . '"/>' . "\n"
     ;
   }
 

@@ -434,6 +434,17 @@ if ( $do_build_toc > 5 )
 # ##  ONLY UTILITY FUNCTIONS BEYOND THIS POINT  ## #
 # ################################################ #
 
+sub reality {
+  my $lc_ret;
+
+  $lc_ret = &wraprg::rel_sm(@_);
+  if ( !(-f $lc_ret) )
+  {
+    die("\nCould not locate the file:\n    " . $lc_ret . ":\n\n");
+  }
+
+  return $lc_ret;
+}
 
 sub amongval {
   my $lc_rg;
@@ -457,7 +468,7 @@ sub import_of__css__do {
   $lc_dst = ($build_dir . $oebp_string . '/' . $_[0]);
   system('mkdir','-p',$lc_dst);
   system('rmdir',$lc_dst);
-  system('cp',&wraprg::rel_sm($source_fdir,$_[0]),$lc_dst);
+  system('cp',&reality($source_fdir,$_[0]),$lc_dst);
 
   @list_of__css__of = (@list_of__css__of,$_[0]);
   $list_of__css__cn = int($list_of__css__cn + 1.2);
@@ -469,7 +480,7 @@ sub import_of__img__do {
   $lc_dst = ($build_dir . $oebp_string . '/' . $_[0]);
   system('mkdir','-p',$lc_dst);
   system('rmdir',$lc_dst);
-  system('cp',&wraprg::rel_sm($source_fdir,$_[0]),$lc_dst);
+  system('cp',&reality($source_fdir,$_[0]),$lc_dst);
 
   @list_of__img__of = (@list_of__img__of,$_[0]);
   $list_of__img__cn = int($list_of__img__cn + 1.2);
@@ -481,7 +492,7 @@ sub import_of__cvimg__do {
   $lc_dst = ($build_dir . $oebp_string . '/' . $_[0]);
   system('mkdir','-p',$lc_dst);
   system('rmdir',$lc_dst);
-  system('cp',&wraprg::rel_sm($source_fdir,$_[0]),$lc_dst);
+  system('cp',&reality($source_fdir,$_[0]),$lc_dst);
 
   if ( &found_crit_field('cvimg') )
   {
@@ -497,7 +508,7 @@ sub import_of__ftext__do {
   $lc_dst = ($build_dir . $oebp_string . '/' . $_[0]);
   system('mkdir','-p',$lc_dst);
   system('rmdir',$lc_dst);
-  system('cp',&wraprg::rel_sm($source_fdir,$_[0]),$lc_dst);
+  system('cp',&reality($source_fdir,$_[0]),$lc_dst);
 
   # For TOC Generator, we must know what page we are on.
   $toc_on_an_xml_so = 10;
@@ -517,7 +528,7 @@ sub import_of__text__do {
   $lc_dst = ($build_dir . $oebp_string . '/' . $_[0]);
   system('mkdir','-p',$lc_dst);
   system('rmdir',$lc_dst);
-  system('cp',&wraprg::rel_sm($source_fdir,$_[0]),$lc_dst);
+  system('cp',&reality($source_fdir,$_[0]),$lc_dst);
 
   # For TOC Generator, we must know what page we are on.
   $toc_on_an_xml_so = 10;

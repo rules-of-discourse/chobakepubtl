@@ -25,6 +25,7 @@ my $toc_on_an_xml_so = 0;
 my $toc_on_an_xml_at;
 my $toc_last_level = 0;
 my $toc_last_count = 0;
+my $toc_entries_exist = 0;
 my @toc_list = ();
 
 my @source_lines;
@@ -233,6 +234,20 @@ sub found_crit_field {
     if ( $lc_a eq $_[0] ) { return (2>1); }
   }
   return(1>2);
+}
+
+if ( $toc_entries_exist < 5 )
+{
+  die("
+You have failed to specify any 'cont' entries:
+  Format:  cont:<level>:<anchor>:<title>
+
+The anchor is an element on the last text page specified prior
+to the 'cont' entry. If the link is to the whole page (i.e., the
+very beginning) rather than a specific element, then the value
+of this field in the row will be '*'.
+"
+  . "\n");
 }
 
 
@@ -518,6 +533,8 @@ sub import_of__cont__do {
   my $lc_taglt;
   my $lc_title;
   my $lc_node;
+
+  $toc_entries_exist = 10;
   ($lc_lvl,$lc_taglt,$lc_title) = split(/:/,$_[0],3);
 
   if ( $lc_lvl < 0.5 )

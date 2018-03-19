@@ -1,6 +1,7 @@
 
 ::: Here are the binary commands to be installed:
-
+:csrc:cm-exsubst:
+-- :cbin:exsubst:
 
 
 

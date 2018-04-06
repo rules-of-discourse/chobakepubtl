@@ -10,6 +10,9 @@ my $build_dir;
 my $oebp_cm_arg;
 my $epub_bnom;
 
+my $set_uid_on = 0;
+my $set_uid_file;
+
 my $source_fdir;
 my $source_cont;
 my $book_loc_epub;
@@ -60,6 +63,16 @@ sub create_our_uid {
 
   if ( $our_uid_set > 5 ) { return; }
 
+  if ( $set_uid_on > 5 )
+  {
+    if ( -f $set_uid_file )
+    {
+      $our_uid_thing = &wraprg::abro('cat ' . &wraprg::bsc($set_uid_file));
+      chomp($our_uid_thing);
+      return;
+    }
+  }
+
   $lc_seta = ['0','1','2','3','4','5','6',
     '7','8','9','a','b','c','d','e','f','g',
     'h','i','j','k','l','m','n','o','p','q',
@@ -68,6 +81,10 @@ sub create_our_uid {
   $lc_setb = [@$lc_seta,'-'];
   $lc_counto = 60;
   $our_uid_thing = 'chobakepubtl:rnd:';
+  if ( $set_uid_on > 5 )
+  {
+    $our_uid_thing = 'chobakepubtl:crn:';
+  }
   $our_uid_thing .= &randompicker($lc_seta);
   while ( $lc_counto > 0.5 )
   {
@@ -75,6 +92,12 @@ sub create_our_uid {
     $lc_counto = int($lc_counto - 0.8);
   }
   $our_uid_thing .= &randompicker($lc_seta);
+
+  if ( $set_uid_on > 5 )
+  {
+    system('echo ' . &wraprg::bsc($our_uid_thing) . ' > ' . &wraprg::bsc($set_uid_file) );
+  }
+
 }
 
 
@@ -203,6 +226,17 @@ sub eachlin {
     if ( $lc_cn eq 'on' ) { $do_build_toc = 10; return; }
     if ( $lc_cn eq 'off' ) { $do_build_toc = 0; return; }
     die("\nValue of 'buildtoc' field must be 'on' or 'off'.\n\n");
+  }
+
+  if ( $lc_tp eq 'uidsource' )
+  {
+    if ( $set_uid_on > 5 )
+    {
+      die("\nIllegal to have two instances of 'uidsource' in recipe file.\n\n");
+    }
+    $set_uid_on = 10;
+    $set_uid_file = $lc_cn;
+    return;
   }
 
   die("\nNo such recipe line type: " . $lc_tp . ":\n");
